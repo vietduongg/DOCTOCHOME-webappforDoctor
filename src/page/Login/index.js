@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import "antd/dist/antd.css";
 
 // import image
@@ -9,20 +9,10 @@ import DoctorIcon from "./Image/doctor-icon.png";
 import LoginForm from "../../components/LoginForm";
 import RegisterForm from "../../components/RegisterForm";
 
-import { Layout, Tabs, Image, Modal } from "antd";
+import { Layout, Tabs, Image } from "antd";
 import "./login.css";
 
 const Index = () => {
-  const [isModalVisible, setIsModalVisible] = useState(false);
-
-  const handleOk = () => {
-    setIsModalVisible(false);
-  };
-
-  const handleCancel = () => {
-    setIsModalVisible(false);
-  };
-
   const { Header, Content } = Layout;
   const { TabPane } = Tabs;
 
@@ -31,16 +21,6 @@ const Index = () => {
   return (
     <Layout className="Layout">
       <Header>Header</Header>
-      <Modal
-        title="Basic Modal"
-        visible={isModalVisible}
-        onOk={handleOk}
-        onCancel={handleCancel}
-      >
-        <p>Some contents...</p>
-        <p>Some contents...</p>
-        <p>Some contents...</p>
-      </Modal>
       <Content className="Content">
         <Image
           // src={process.env.PUBLIC_URL + "/images/doctor-icon.png"}

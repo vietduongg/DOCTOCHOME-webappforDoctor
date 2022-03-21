@@ -1,5 +1,9 @@
 import React, { useState } from "react";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  updateProfile,
+  getAuth,
+} from "firebase/auth";
 import {
   Form,
   Input,
@@ -15,7 +19,6 @@ import {
   Modal,
 } from "antd";
 import {
-  auth,
   storage,
   ref,
   uploadBytesResumable,
@@ -52,8 +55,6 @@ export default function RegisterForm() {
   const [linkImageCertificateOfWork, setLinkImageCertificateOfWork] = useState(
     []
   );
-
-  const [agreeToContract, setAgreeToContract] = useState(null);
 
   //Ảnh chứng nhận làm việc
   const [
@@ -293,10 +294,13 @@ export default function RegisterForm() {
   const onChange = (checked) => {
     setLoading(!checked);
   };
-
+  const auth = getAuth();
   const onFinish = (values) => {
     createUserWithEmailAndPassword(auth, values.mail, values.password)
       .then(async (user) => {
+        updateProfile(auth.user, {
+          disabled: true,
+        });
         const clinic = {
           clinicName: values.clinicName,
           clinicAddress: values.clinicAddress,
