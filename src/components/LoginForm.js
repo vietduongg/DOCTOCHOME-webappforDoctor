@@ -2,7 +2,7 @@ import React from "react";
 import { Form, Input, Button } from "antd";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../firebase";
-
+import { useNavigate } from "react-router-dom";
 export default function LoginForm() {
   // this arrow function will process login
   const handleLogin = (email, password) => {
@@ -27,11 +27,13 @@ export default function LoginForm() {
             break;
         }
       });
+    window.location.href = "http://localhost:3000/dashboard";
   };
 
   // get values form submit
   const onFinish = (values) => {
     // value input
+
     console.log("Gía trị trả về khi submit:", values);
     handleLogin(values.email, values.password);
   };
