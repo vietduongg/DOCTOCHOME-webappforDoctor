@@ -9,6 +9,7 @@ export default function LoginForm() {
     signInWithEmailAndPassword(auth, email, password)
       .then((user) => {
         console.log("Login with account", user);
+        window.location.href = "http://localhost:3000/dashboard";
       })
       .catch((error) => {
         const errorCode = error.code;
@@ -27,7 +28,6 @@ export default function LoginForm() {
             break;
         }
       });
-    window.location.href = "http://localhost:3000/dashboard";
   };
 
   // get values form submit
