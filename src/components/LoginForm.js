@@ -53,7 +53,16 @@ export default function LoginForm() {
       <Form.Item
         label="Địa chỉ Email"
         name="email"
-        rules={[{ required: true, message: "Vui lòng điền Email" }]}
+        rules={[
+          {
+            type: "email",
+            message: "Vui lòng nhập đúng format email",
+          },
+          {
+            required: true,
+            message: "Vui lòng nhập email liên hệ",
+          },
+        ]}
       >
         <Input />
       </Form.Item>
