@@ -295,6 +295,7 @@ export default function RegisterForm() {
     setLoading(!checked);
   };
   const auth = getAuth();
+
   const onFinish = (values) => {
     createUserWithEmailAndPassword(auth, values.mail, values.password)
       .then(async (user) => {

@@ -1,10 +1,16 @@
 import React from "react";
-import { Form, Input, Button } from "antd";
+import { Form, Input, Button, Modal } from "antd";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../firebase";
-import { useNavigate } from "react-router-dom";
+
 export default function LoginForm() {
-  // this arrow function will process login
+  function errorModal(contentP) {
+    Modal.error({
+      title: "Thông báo",
+      content: contentP,
+    });
+  }
+
   const handleLogin = (email, password) => {
     signInWithEmailAndPassword(auth, email, password)
       .then((user) => {
@@ -15,16 +21,16 @@ export default function LoginForm() {
         const errorCode = error.code;
         switch (errorCode) {
           case "auth/invalid-email":
-            console.log("Sai định dạng email!");
+            errorModal("Sai định dạng email!");
             break;
           case "auth/user-not-found":
-            console.log("Tài khoản không tồn tại!");
+            errorModal("Tài khoản không tồn tại!");
             break;
           case "auth/wrong-password":
-            console.log("Sai password!");
+            errorModal("Sai password!");
             break;
           default:
-            console.log("Lỗi không xác định!");
+            errorModal("Lỗi không xác định!");
             break;
         }
       });

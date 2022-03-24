@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
 import "antd/dist/antd.css";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 // import image
 // import <name> from <path>
@@ -15,9 +16,19 @@ import "./login.css";
 const Index = () => {
   const { Header, Content } = Layout;
   const { TabPane } = Tabs;
+  const auth = getAuth();
 
+  function check() {
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        window.location.href = "http://localhost:3000/dashboard";
+      }
+    });
+  }
   // this arrow function will process register
-
+  useEffect(() => {
+    check();
+  }, []);
   return (
     <Layout className="Layout">
       <Header>Header</Header>
