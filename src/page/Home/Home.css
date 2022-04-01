@@ -43,12 +43,24 @@
 
 #customers tr:nth-child(even){background-color: #f2f2f2;}
 
-#customers tr:hover {background-color: #ddd;}
+#customers tr:hover {background-color: rgb(142, 205, 209);}
 
 #customers th {
   padding-top: 12px;
   padding-bottom: 12px;
   text-align: left;
-  background-color: #04AA6D;
+  background-color: #00d0f1;
   color: white;
+}
+
+.ant-form{
+  font-size: 18px;
+}
+.ant-drawer-title{
+  font-size: 20px;
+}
+
+
+.ant-input-number{
+  width: 650px;
 }

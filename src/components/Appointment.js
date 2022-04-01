@@ -8,31 +8,29 @@ import {
   Card,
   Col,
   Row,
+  Radio,
   Form,
   Input,
-  Select,
 } from "antd";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { getDocs, collection, query, where } from "firebase/firestore";
 import { db } from "./../firebase";
-import TableData from "./TableData";
+
 import { ExclamationCircleOutlined } from "@ant-design/icons";
 import { doc, setDoc } from "firebase/firestore";
 
-export default function Appointment(userID) {
-  const { Option } = Select;
-  const layout = {
-    labelCol: { span: 8 },
-    wrapperCol: { span: 16 },
-  };
-  const tailLayout = {
-    wrapperCol: { offset: 8, span: 16 },
-    marginTop: 50,
-  };
+//import Component from ""
+import MeidicalRecord from "./MedicalRecord";
+import TableData from "./TableData";
+
+export default function Appointment({ userID, doctorData }) {
   const { confirm } = Modal;
   const { TabPane } = Tabs;
-  const { TextArea } = Input;
+  let [acpPercent, setAcpPercent] = useState(0);
+  let [refusePercent, setRefusePercent] = useState(0);
   const auth = getAuth();
+  const [dataChoose, setDataChoose] = useState({});
+  const [modalVisible, setModalVisible] = useState(false);
 
   const [dataInvitation, setDataInvitation] = useState([]);
   const [dataTableInvitation, setDataTableInvitation] = useState([]);
@@ -43,18 +41,21 @@ export default function Appointment(userID) {
   const [dataRefuse, setDataRefuse] = useState([]);
   const [dataTableRefuse, setDataTableRefuse] = useState([]);
 
+  const [medicalRedcordVisible, setMediacalRecordVisible] = useState(false);
+  const [medicalRedcordData, setMediacalRecordData] = useState([]);
+
   const [rerender, setRerender] = useState(0);
-  const [mediacalRecordVisible, setMediacalRecordVisible] = useState(false);
+  const [report, setReport] = useState("");
 
   function showConfirmDelete(dataPatient) {
     let obj = dataPatient.record;
-
     confirm({
       title: "Bạn sẽ từ chối yêu cầu đền từ bệnh nhân " + obj.name + " ?",
       icon: <ExclamationCircleOutlined />,
       async onOk() {
-        const uid = userID.userID;
+        const uid = userID;
         const id = obj.IDAppoment;
+        const patientsID = obj.UserID;
         await setDoc(doc(db, "doctor", uid, "Appointment", id), {
           IDAppoment: obj.IDAppoment,
           UserID: obj.UserID,
@@ -66,6 +67,21 @@ export default function Appointment(userID) {
           time: obj.time,
           timeRefuse: Date(),
           status: 2,
+          reason: "",
+        });
+
+        await setDoc(doc(db, "patients", patientsID, "Appointment", id), {
+          IDAppoment: obj.IDAppoment,
+          UserID: obj.UserID,
+          age: obj.age,
+          description: obj.description,
+          gender: obj.gender,
+          name: obj.name,
+          phone: obj.phoneNumber,
+          time: obj.time,
+          timeRefuse: Date(),
+          status: 2,
+          avatarDoc: doctorData.avatar,
         });
       },
       onCancel() {},
@@ -84,8 +100,11 @@ export default function Appointment(userID) {
         obj.timeNew,
       icon: <ExclamationCircleOutlined />,
       async onOk() {
-        const uid = userID.userID;
+        const uid = userID;
         const id = obj.IDAppoment;
+
+        const patientsID = obj.UserID;
+
         await setDoc(doc(db, "doctor", uid, "Appointment", id), {
           IDAppoment: obj.IDAppoment,
           UserID: obj.UserID,
@@ -96,6 +115,24 @@ export default function Appointment(userID) {
           phone: obj.phoneNumber,
           time: obj.time,
           status: 1,
+        });
+
+        await setDoc(doc(db, "patients", patientsID, "Appointment", id), {
+          IDAppoment: obj.IDAppoment,
+          UserID: obj.UserID,
+          age: obj.age,
+          description: obj.description,
+          gender: obj.gender,
+          name: obj.name,
+          phone: obj.phoneNumber,
+          time: obj.time,
+          timeRefuse: Date(),
+          status: 1,
+          avatarDoc: doctorData.avatar,
+          nameDoctor: doctorData.fullName,
+          clinicAddress: doctorData.clinic.clinicAddress,
+          clinicName: doctorData.clinic.clinicName,
+          IDDoctor: uid,
         });
       },
       onCancel() {},
@@ -110,46 +147,54 @@ export default function Appointment(userID) {
         if (user) {
           const uid = user.uid;
 
-          //Get Data Table Invitaion
           setDataInvitation([]);
-          const getCollectInvitation = await query(
-            collection(db, "doctor", uid, "Appointment"),
-            where("status", "==", 0)
-          );
-          const getDocumentInvitation = await getDocs(getCollectInvitation);
+          setDataAcp([]);
+          setDataRefuse([]);
+          let getDocumentInvitation = [];
+          let getDocumentAcp = [];
+          let getDocumentRefuse = [];
+
+          if (rerender === 0) {
+            const getCollectInvitation = await query(
+              collection(db, "doctor", uid, "Appointment"),
+              where("status", "==", 0)
+            );
+            getDocumentInvitation = await getDocs(getCollectInvitation);
+
+            const getCollectAcp = await query(
+              collection(db, "doctor", uid, "Appointment"),
+              where("status", "==", 1)
+            );
+            getDocumentAcp = await getDocs(getCollectAcp);
+            const getCollectRefuse = await query(
+              collection(db, "doctor", uid, "Appointment"),
+              where("status", "==", 2)
+            );
+            getDocumentRefuse = await getDocs(getCollectRefuse);
+          }
+
+          getDocumentRefuse.forEach((doc) => {
+            setDataRefuse((dataRefuse) => [...dataRefuse, doc.data()]);
+          });
           getDocumentInvitation.forEach((doc) => {
             setDataInvitation((dataInvitation) => [
               ...dataInvitation,
               doc.data(),
             ]);
           });
-
-          //Get Data Table Acp
-          setDataAcp([]);
-          const getCollectAcp = await query(
-            collection(db, "doctor", uid, "Appointment"),
-            where("status", "==", 1)
-          );
-          const getDocumentAcp = await getDocs(getCollectAcp);
           getDocumentAcp.forEach((doc) => {
             setDataAcp((dataAcp) => [...dataAcp, doc.data()]);
           });
-
-          //Get Data Table Refuse
-          setDataRefuse([]);
-          const getCollectRefuse = await query(
-            collection(db, "doctor", uid, "Appointment"),
-            where("status", "==", 2)
-          );
-          const getDocumentRefuse = await getDocs(getCollectRefuse);
-          getDocumentRefuse.forEach((doc) => {
-            setDataRefuse((dataRefuse) => [...dataRefuse, doc.data()]);
-          });
-
           setRerender(1);
           prepareDataInvitation(dataInvitation);
           prepareDataAcp(dataAcp);
           prepareDataRefuse(dataRefuse);
+          setAcpPercent(
+            (dataAcp.length / (dataAcp.length + dataRefuse.length)) * 100
+          );
+          setRefusePercent(
+            (dataRefuse.length / (dataAcp.length + dataRefuse.length)) * 100
+          );
         }
       });
     });
@@ -254,9 +299,10 @@ export default function Appointment(userID) {
             type="primary"
             onClick={() => {
               setMediacalRecordVisible(true);
+              setMediacalRecordData(record);
             }}
           >
-            Viết hồ sơ bệnh án{" "}
+            Viết hồ sơ bệnh án
           </Button>
         </Space>
       ),
@@ -268,7 +314,8 @@ export default function Appointment(userID) {
           <Button
             type="primary"
             onClick={() => {
-              showConfirmDelete({ record });
+              setDataChoose(record);
+              setModalVisible(true);
             }}
             danger
           >
@@ -347,9 +394,11 @@ export default function Appointment(userID) {
     let date;
     let obj;
     let array = [];
+    let timeCodeNew;
     for (const loop in data) {
       date = new Date(data[loop].time * 1000);
       timeNew = formatDate(date) + " " + formatTime(date);
+      timeCodeNew = formatCode(date);
       obj = {
         key: loop,
         STT: Number(loop) + 1,
@@ -361,6 +410,7 @@ export default function Appointment(userID) {
         description: data[loop].description,
         IDAppoment: data[loop].IDAppoment,
         time: data[loop].time,
+        timeCode: timeCodeNew,
         timeNew: timeNew,
       };
       array.push(obj);
@@ -373,9 +423,23 @@ export default function Appointment(userID) {
     let date;
     let obj;
     let array = [];
+    let timeReFuseNew;
+    let dateRefuse;
     for (const loop in data) {
       date = new Date(data[loop].time * 1000);
+      dateRefuse = new Date(Date.parse(data[loop].timeRefuse) * 1000);
       timeNew = formatDate(date) + " " + formatTime(date);
+      if (data[loop].reason === "")
+        timeReFuseNew =
+          formatDate(dateRefuse) + " vào lúc " + formatTime(dateRefuse);
+      else
+        timeReFuseNew =
+          formatDate(dateRefuse) +
+          " vào lúc " +
+          formatTime(dateRefuse) +
+          ", lý do: " +
+          data[loop].reason;
+      console.log(timeReFuseNew);
       obj = {
         key: loop,
         STT: Number(loop) + 1,
@@ -387,7 +451,7 @@ export default function Appointment(userID) {
         description: data[loop].description,
         IDAppoment: data[loop].IDAppoment,
         time: data[loop].time,
-        timeRefuse: data[loop].timeRefuse.getHours(),
+        timeRefuse: timeReFuseNew,
         timeNew: timeNew,
       };
       array.push(obj);
@@ -399,7 +463,16 @@ export default function Appointment(userID) {
     var year = date.getFullYear().toString();
     var month = (date.getMonth() + 101).toString().substring(1);
     var day = (date.getDate() + 100).toString().substring(1);
-    return "Ngày: " + month + "/" + day + "/" + year;
+    return "Ngày: " + day + "/" + month + "/" + year;
+  }
+
+  function formatCode(date) {
+    var year = date.getFullYear().toString();
+    var month = (date.getMonth() + 101).toString().substring(1);
+    var day = (date.getDate() + 100).toString().substring(1);
+    var hours = date.getHours().toString();
+    var minutes = date.getMinutes().toString();
+    return day + month + year + hours + minutes;
   }
 
   function formatTime(date) {
@@ -412,169 +485,89 @@ export default function Appointment(userID) {
     return "Giờ: " + hours + ":" + minutes + ":" + seconds;
   }
 
-  const onGenderChange = (value: string) => {
-    switch (value) {
-      case "male":
-        // this.formRef.current!.setFieldsValue({ note: 'Hi, man!' });
-        return;
-      case "female":
-        // this.formRef.current!.setFieldsValue({ note: 'Hi, lady!' });
-        return;
-      case "other":
-        return;
-      default:
-      // this.formRef.current!.setFieldsValue({ note: 'Hi there!' });
-    }
+  function invitationReport() {
+    const uid = userID;
+    const id = dataChoose.IDAppoment;
+    setDoc(doc(db, "doctor", uid, "Appointment", id), {
+      IDAppoment: dataChoose.IDAppoment,
+      UserID: dataChoose.UserID,
+      age: dataChoose.age,
+      description: dataChoose.description,
+      gender: dataChoose.gender,
+      name: dataChoose.name,
+      phone: dataChoose.phoneNumber,
+      time: dataChoose.time,
+      timeRefuse: Date(),
+      reason: report,
+      status: 2,
+    });
+  }
+  const sendReport = (e) => {
+    if (e.target.value === "another") {
+      setReport(document.getElementById("reason").value);
+    } else setReport(e.target.value);
   };
-
-  const onFinish = (values: any) => {
-    console.log(values);
-  };
-
-  const onReset = () => {
-    // this.formRef.current!.resetFields();
-  };
-
-  const onFill = () => {
-    // this.formRef.current!.setFieldsValue({
-    //   note: 'Hello world!',
-    //   gender: 'male',
-    // });
-  };
-
   useEffect(() => {
     getData();
   }, [rerender]);
 
   return (
     <>
+      <MeidicalRecord
+        setMediacalRecordVisible={setMediacalRecordVisible}
+        medicalRedcordVisible={medicalRedcordVisible}
+        medicalRedcordData={medicalRedcordData}
+        userID={userID}
+        doctorData={doctorData}
+      />
+
       <Modal
-        title="Hồ sơ bệnh án"
+        title="Báo cáo"
         style={{ top: 20 }}
-        visible={mediacalRecordVisible}
-        onOk={() => setMediacalRecordVisible(false)}
-        onCancel={() => setMediacalRecordVisible(false)}
+        visible={modalVisible}
+        onOk={() => setModalVisible(false)}
+        onCancel={() => setModalVisible(false)}
+        footer={false}
       >
-        <Form {...layout} name="control-ref" onFinish={onFinish}>
-          <Form.Item
-            name="name"
-            label="Tên bệnh nhân"
-            rules={[{ required: true }]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            name="gender"
-            label="Giới tính"
-            rules={[{ required: true }]}
-          >
-            <Select
-              placeholder="Chọn các giới"
-              onChange={onGenderChange}
-              allowClear
-            >
-              <Option value="male">male</Option>
-              <Option value="female">female</Option>
-              <Option value="other">other</Option>
-            </Select>
-            <br />
-          </Form.Item>
-          <Form.Item
-            name="name"
-            label="Tình trạng bệnh nhân"
-            rules={[{ required: true }]}
-          >
-            <TextArea rows={4} />
-          </Form.Item>
-          <table id="customers">
-            <tr>
-              <th>Tên thuốc</th>
-              <th>Số lượng</th>
-              <th>Chi tiết</th>
-            </tr>
-            <tr>
-              <td>
-                <Input />
-              </td>
-              <td>
-                <Input />
-              </td>
-              <td>
-                <Input />
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <Input />
-              </td>
-              <td>
-                <Input />
-              </td>
-              <td>
-                <Input />
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <Input />
-              </td>
-              <td>
-                <Input />
-              </td>
-              <td>
-                <Input />
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <Input />
-              </td>
-              <td>
-                <Input />
-              </td>
-              <td>
-                <Input />
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <Input />
-              </td>
-              <td>
-                <Input />
-              </td>
-              <td>
-                <Input />
-              </td>
-            </tr>
-          </table>
-          <Form.Item
-            noStyle
-            shouldUpdate={(prevValues, currentValues) =>
-              prevValues.gender !== currentValues.gender
-            }
-          >
-            {({ getFieldValue }) =>
-              getFieldValue("gender") === "other" ? (
-                <Form.Item
-                  name="customizeGender"
-                  label="Customize Gender"
-                  rules={[{ required: true }]}
-                >
-                  <Input />
-                </Form.Item>
-              ) : null
-            }
-          </Form.Item>
-          <Form.Item {...tailLayout}>
-            <Button type="primary" htmlType="submit">
-              Cập nhật hồ sơ bệnh án
-            </Button>
-          </Form.Item>
-        </Form>
+        <p>Bạn vui lòng cho chúng tôi có thể biết được lí do?</p>
+        <Radio.Group onChange={sendReport} value={report}>
+          <Radio value="Bệnh nhân đã thông báo lại với bác sĩ">
+            Bệnh nhân đã thông báo lại với bác sĩ
+          </Radio>
+          <Radio value="Đã đến giờ khám, bệnh nhân chưa có mặt">
+            Đã đến giờ khám, bệnh nhân chưa có mặt
+          </Radio>
+          <Radio value="Không phù hợp với bác sĩ">
+            Không phù hợp với bác sĩ
+          </Radio>
+          <br />
+          <Radio value="another">
+            Khác
+            <Input id="reason" placeholder="Lý do khác" />
+          </Radio>
+        </Radio.Group>
+        {report ? (
+          <Row gutter={16}>
+            <Col span={24}>
+              <Form.Item wrapperCol={{ offset: 8, span: 8 }}>
+                <div className="ant-form-item-control-input-content-for-login-button">
+                  <Button
+                    onClick={() => {
+                      invitationReport();
+                    }}
+                  >
+                    Gửi
+                  </Button>
+                </div>
+              </Form.Item>
+            </Col>
+          </Row>
+        ) : (
+          <></>
+        )}
       </Modal>
       <Tabs defaultActiveKey="1" type="card" size={"large"} centered>
-        <TabPane tab="Lời mời" key="1">
+        <TabPane tab="Đã đăng kí" key="1">
           <TableData
             columns={columnsInvitation}
             dataTableTest={dataTableInvitation}
@@ -591,27 +584,28 @@ export default function Appointment(userID) {
         <Row gutter={16}>
           <Col span={8}>
             <Card title="Đã chấp nhận" bordered={false}>
-              <Progress type="circle" percent={75} />
+              <Progress type="circle" percent={Math.round(acpPercent)} />
             </Card>
           </Col>
           <Col span={8}>
             <Card title="Đã hủy" bordered={false}>
-              <Progress type="circle" percent={70} status="exception" />
+              <Progress
+                type="circle"
+                percent={Math.round(refusePercent)}
+                status="exception"
+              />
             </Card>
           </Col>
           <Col span={8}>
             <Card
-              title="Thống kê trong tháng"
+              title="Thống kê của bạn"
               bordered={false}
               style={{ textAlign: "left" }}
             >
-              {() => {
-                return "Tổng số lượng lời mời trong tháng: ";
-              }}
               <br />
-              Tổng số lượng chấp nhận:
+              Tổng số lượng chấp nhận: {Math.round(acpPercent)}%
               <br />
-              Tổng số lượng lời từ chối:
+              Tổng số lượng lời từ chối: {Math.round(refusePercent)}%
             </Card>
           </Col>
         </Row>

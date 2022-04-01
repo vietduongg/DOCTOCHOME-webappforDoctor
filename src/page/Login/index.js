@@ -1,6 +1,8 @@
 import React, { useEffect } from "react";
 import "antd/dist/antd.css";
-import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
+import { db } from "../../firebase";
+import { doc, getDoc } from "firebase/firestore";
 
 // import image
 // import <name> from <path>
@@ -10,7 +12,7 @@ import DoctorIcon from "./Image/doctor-icon.png";
 import LoginForm from "../../components/LoginForm";
 import RegisterForm from "../../components/RegisterForm";
 
-import { Layout, Tabs, Image } from "antd";
+import { Layout, Tabs, Image, Modal } from "antd";
 import "./login.css";
 
 const Index = () => {
@@ -18,10 +20,27 @@ const Index = () => {
   const { TabPane } = Tabs;
   const auth = getAuth();
 
+  function error() {
+    Modal.error({
+      title: "Bạn chưa được xác nhận",
+      content:
+        "Trong thời gian này, bạn chưa thể đăng nhập vì chúng tôi đang xử lí hồ sơ của bạn. Vui lòng liên lạc 098-xxx-xxx hoặc doctorhome.app@gmail.com",
+      onOk() {
+        signOut(auth);
+      },
+      okText: "Quay về trang đăng nhập",
+    });
+  }
+
   function check() {
     onAuthStateChanged(auth, async (user) => {
       if (user) {
-        window.location.href = "http://localhost:3000/dashboard";
+        const docSnap = await getDoc(doc(db, "doctor", user.uid));
+        if (docSnap.data().status === 0) {
+          error();
+        } else if (docSnap.data().status === 1) {
+          window.location.href = "/dashboard";
+        }
       }
     });
   }

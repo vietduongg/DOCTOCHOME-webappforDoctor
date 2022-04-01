@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   createUserWithEmailAndPassword,
-  updateProfile,
   getAuth,
+  signOut,
 } from "firebase/auth";
+
 import {
   Form,
   Input,
@@ -18,6 +19,7 @@ import {
   Radio,
   Modal,
 } from "antd";
+
 import {
   storage,
   ref,
@@ -33,8 +35,6 @@ export default function RegisterForm() {
   const metadata = {
     contentType: "image/jpeg",
   };
-
-  const [visible, setVisible] = useState(false);
 
   const [loading, setLoading] = useState(false);
 
@@ -296,77 +296,105 @@ export default function RegisterForm() {
   };
   const auth = getAuth();
 
-  const onFinish = (values) => {
-    createUserWithEmailAndPassword(auth, values.mail, values.password)
-      .then(async (user) => {
-        updateProfile(auth.user, {
-          disabled: true,
-        });
-        const clinic = {
-          clinicName: values.clinicName,
-          clinicAddress: values.clinicAddress,
-          clinicImage: linkImageClinic,
-        };
+  function warning(abc) {
+    Modal.warning({
+      title: "Sai thông tin",
+      content: "Bạn vui lòng kiểm tra thông tin về địa chỉ hòm thư",
+    });
+  }
 
-        const certificate = {
-          practicingCertificate: linkImagePracticingCertificate,
-          nameOfHospital: values.nameOfPracticeHospital,
-          addressOfPracticeHospital: values.addressOfPracticeHospital,
-          practicingCertificateOfHospital: linkImageCertificateOfWork,
-        };
-        if (loading === true) {
-          console.log("Không có làm việc");
-          await setDoc(doc(db, "doctor", user.user.uid), {
-            fullName: values.fullname,
-            gender: values.gender,
-            dob: values.dob._d,
-            email: values.mail,
-            avatar: linkImagePersonal,
-            numberPhone: values.phonenumber,
-            detail: values.detailPersonal,
-            specialist: values.specialist,
-            service: service,
-            status: 1,
-            clinic,
-            certificate,
-          });
-        } else {
-          console.log("có làm việc");
-          const workingHospital = {
-            nameOfHospital: values.nameOfHospital,
-            addressOfHospital: values.addressOfHospital,
-            wokingCertificateOfHospital: linkImageWokingCertificateOfHospital,
+  const onFinish = (values) => {
+    return new Promise((resolve) => {
+      createUserWithEmailAndPassword(auth, values.mail, values.password)
+        .then((user) => {
+          const clinic = {
+            clinicName: values.clinicName,
+            clinicAddress: values.clinicAddress,
+            clinicImage: linkImageClinic,
           };
 
-          await setDoc(doc(db, "doctor", user.user.uid), {
-            fullName: values.fullname,
-            gender: values.gender,
-            dob: values.dob._d,
-            email: values.mail,
-            avatar: linkImagePersonal,
-            numberPhone: values.phonenumber,
-            detail: values.detailPersonal,
-            specialist: values.specialist,
-            service: service,
-            status: 0,
-            clinic,
-            certificate,
-            workingHospital,
-          });
-        }
-        setVisible(true);
-      })
-      .catch((error) => {
-        const errorCode = error.code;
-        console.log(errorCode);
-      });
+          const certificate = {
+            practicingCertificate: linkImagePracticingCertificate,
+            nameOfHospital: values.nameOfPracticeHospital,
+            addressOfPracticeHospital: values.addressOfPracticeHospital,
+            practicingCertificateOfHospital: linkImageCertificateOfWork,
+          };
+          if (loading === true) {
+            setDoc(doc(db, "doctor", user.user.uid), {
+              fullName: values.fullname,
+              gender: values.gender,
+              dob: values.dob._d,
+              email: values.mail,
+              avatar: linkImagePersonal,
+              numberPhone: values.phonenumber,
+              detail: values.detailPersonal,
+              specialist: values.specialist,
+              service: service,
+              status: 0,
+              clinic,
+              certificate,
+            })
+              .then((huhu) => {
+                console.log("huhu.toString()");
+              })
+              .catch((error) => {
+                console.log(error);
+              });
+          } else {
+            console.log("có làm việc");
+            const workingHospital = {
+              nameOfHospital: values.nameOfHospital,
+              addressOfHospital: values.addressOfHospital,
+              wokingCertificateOfHospital: linkImageWokingCertificateOfHospital,
+            };
+
+            console.log(
+              setDoc(doc(db, "doctor", user.user.uid), {
+                fullName: values.fullname,
+                gender: values.gender,
+                dob: values.dob._d,
+                email: values.mail,
+                avatar: linkImagePersonal,
+                numberPhone: values.phonenumber,
+                detail: values.detailPersonal,
+                specialist: values.specialist,
+                service: service,
+                status: 0,
+                clinic,
+                certificate,
+                workingHospital,
+              })
+            );
+          }
+          info();
+        })
+        .catch((error) => {
+          warning();
+        });
+    });
   };
 
-  const agreeToContractForm = (values) => {
-    setVisible(false);
-  };
+  function info() {
+    Modal.info({
+      title: "Dữ liệu đã được lên về trung tâm để quản trị viên xét duyệt",
+      content: (
+        <div>
+          <p>Trong thời gian 3 ngày vui lòng chờ kết quả xác nhận</p>
+          <p>
+            Kết quả xét duyệt, chúng tôi gửi về hòm thư điện tử mà bạn cung cấp
+          </p>
+        </div>
+      ),
+      onOk() {
+        window.location.href = "/";
+      },
+      okText: "Quay về trang chủ",
+    });
+  }
 
   const onFinishFailed = (errorInfo) => {};
+
+  useEffect(() => {}, []);
   return (
     <Form
       name="basic"
@@ -377,21 +405,8 @@ export default function RegisterForm() {
       // catch event submit
       onFinish={onFinish}
       onFinishFailed={onFinishFailed}
-      autoComplete="off"
+      autoComplete="on"
     >
-      <Modal
-        title="Điều khoản sử dụng Doctor Home"
-        centered
-        visible={visible}
-        okText="Đồng ý thỏa thuận"
-        cancelText="Tôi đang xem xét"
-        onOk={agreeToContractForm}
-        onCancel={() => setVisible(false)}
-        width={1500}
-      >
-        Thông tin của bạn đã được gửi về trang chủ. Vui lòng chờ xác nhận của
-        chúng tôi tôi
-      </Modal>
       <Card title="Đơn đăng kí tham gia hệ thống DOCTOR HOME dành cho bác sĩ">
         <Card type="inner" title="1. Thông tin cá nhân">
           <Row gutter={16}>
@@ -492,11 +507,14 @@ export default function RegisterForm() {
                 ]}
               >
                 <Select>
-                  <Select.Option value="ENT">Tai mũi họng</Select.Option>
-                  <Select.Option value="Dermatologist">Da liễu</Select.Option>
-                  <Select.Option value="Heart">Tym</Select.Option>
-                  <Select.Option value="Paeditrician">Nhi khoa</Select.Option>
-                  <Select.Option value="Neurologist">Thần kinh</Select.Option>
+                  <Select.Option value="Răng Hàm Mặt">
+                    Răng hàm mặt
+                  </Select.Option>
+                  <Select.Option value="Da Liễu">Da liễu</Select.Option>
+                  <Select.Option value="Tim Mạch">Tim mạch</Select.Option>
+                  <Select.Option value="Nhi">Nhi khoa</Select.Option>
+                  <Select.Option value="Mắt">Mắt</Select.Option>
+                  <Select.Option value="Thần Kinh">Thần kinh</Select.Option>
                 </Select>
               </Form.Item>
             </Col>
@@ -516,7 +534,7 @@ export default function RegisterForm() {
                 </Upload>
               </Form.Item>
             </Col>
-            <Col span={10}>
+            <Col span={8}>
               <Form.Item
                 label="Chi tiết về bạn"
                 name="detailPersonal"
@@ -700,7 +718,7 @@ export default function RegisterForm() {
           title="5. Gói dịch vụ sử dụng"
         >
           <Row>
-            <Col span={20}>
+            <Col span={26}>
               <Radio.Group onChange={onChangeService} value={service}>
                 <Radio value={1}>
                   <b>Gói miễn phí</b>

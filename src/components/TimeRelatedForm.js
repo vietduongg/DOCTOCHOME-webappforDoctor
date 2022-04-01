@@ -3,6 +3,7 @@ import { Form, DatePicker, Button, Tabs, message } from "antd";
 
 import { doc, setDoc } from "firebase/firestore";
 import { db } from "../firebase";
+import moment from "moment";
 
 const { RangePicker } = DatePicker;
 const formItemLayout = {
@@ -67,6 +68,7 @@ const TimeRelatedForm = (userID) => {
 
   const [hackValue, setHackValue] = useState();
   const [value, setValue] = useState();
+
   const disabledDate = (current) => {
     if (!dates || dates.length === 0) {
       return false;
@@ -151,9 +153,6 @@ const TimeRelatedForm = (userID) => {
             </Button>
           </Form.Item>
         </Form>
-      </TabPane>
-      <TabPane tab="Cập nhật theo tuần" key="2">
-        Content of Tab 2
       </TabPane>
     </Tabs>
   );

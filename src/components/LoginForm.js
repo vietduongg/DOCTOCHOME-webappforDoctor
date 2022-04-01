@@ -1,9 +1,14 @@
-import React from "react";
+import React, { useState } from "react";
 import { Form, Input, Button, Modal } from "antd";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import {
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail,
+} from "firebase/auth";
 import { auth } from "../firebase";
 
 export default function LoginForm() {
+  const [modalVisible, setModalVisible] = useState(false);
+
   function errorModal(contentP) {
     Modal.error({
       title: "Thông báo",
@@ -15,7 +20,7 @@ export default function LoginForm() {
     signInWithEmailAndPassword(auth, email, password)
       .then((user) => {
         console.log("Login with account", user);
-        window.location.href = "http://localhost:3000/dashboard";
+        window.location.href = "/dashboard";
       })
       .catch((error) => {
         const errorCode = error.code;
@@ -44,6 +49,53 @@ export default function LoginForm() {
     handleLogin(values.email, values.password);
   };
 
+  const onFinishForgotPassword = (values) => {
+    sendPasswordResetEmail(auth, values.mail)
+      .then(() => {
+        countDown();
+        setModalVisible(false);
+      })
+      .catch((error) => {
+        const errorCode = error.code;
+        const errorMessage = error.message;
+        setModalVisible(false);
+        info(errorCode, errorMessage);
+      });
+  };
+
+  function info(a, b) {
+    if (a === "auth/user-not-found") {
+      a = "Tài không tồn tại";
+    }
+    Modal.info({
+      title: a,
+      content: (
+        <div>
+          <p>Vui lòng kiểm tra</p>
+        </div>
+      ),
+      onOk() {},
+    });
+  }
+
+  function countDown() {
+    let secondsToGo = 3;
+    const modal = Modal.success({
+      title: "Vui lòng kiểm tra mail",
+      content: `Chúng tôi sẽ gửi đường link để bạn có thể cung cấp mật khẩu mới cho chúng tôi.`,
+    });
+    const timer = setInterval(() => {
+      secondsToGo -= 1;
+      modal.update({
+        content: `Chúng tôi sẽ gửi đường link để bạn có thể cung cấp mật khẩu mới cho chúng tôi`,
+      });
+    }, 1000);
+    setTimeout(() => {
+      clearInterval(timer);
+      modal.destroy();
+    }, secondsToGo * 1000);
+  }
+
   const onFinishFailed = (errorInfo) => {};
   return (
     <Form
@@ -56,6 +108,46 @@ export default function LoginForm() {
       onFinishFailed={onFinishFailed}
       autoComplete="off"
     >
+      <Modal
+        title="Quên mật khẩu"
+        style={{ top: 20 }}
+        visible={modalVisible}
+        onOk={() => setModalVisible(false)}
+        onCancel={() => setModalVisible(false)}
+        footer={false}
+      >
+        <Form
+          name="basic"
+          labelCol={{ span: 8 }}
+          wrapperCol={{ span: 16 }}
+          initialValues={{ remember: true }}
+          onFinish={onFinishForgotPassword}
+          onFinishFailed={onFinishFailed}
+          autoComplete="off"
+        >
+          <Form.Item
+            label="Địa chỉ Email"
+            name="mail"
+            rules={[
+              {
+                type: "email",
+                message: "Vui lòng nhập đúng format email",
+              },
+              {
+                required: true,
+                message: "Vui lòng nhập email liên hệ",
+              },
+            ]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
+            <Button type="primary" htmlType="submit" block>
+              Nhận đường dẫn
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
       <Form.Item
         label="Địa chỉ Email"
         name="email"
@@ -82,9 +174,23 @@ export default function LoginForm() {
       </Form.Item>
 
       <Form.Item wrapperCol={{ offset: 8, span: 8 }}>
-        <Button type="primary" htmlType="submit">
-          Đăng nhập
-        </Button>
+        <div className="ant-form-item-control-input-content-for-login-button">
+          <Button type="primary" htmlType="submit" block>
+            Đăng nhập
+          </Button>
+        </div>
+      </Form.Item>
+      <Form.Item wrapperCol={{ offset: 8, span: 8 }}>
+        <div className="ant-form-item-control-input-content-for-login-button">
+          <Button
+            type="primary"
+            block
+            danger
+            onClick={() => setModalVisible(true)}
+          >
+            Quên mật khẩu
+          </Button>
+        </div>
       </Form.Item>
     </Form>
   );

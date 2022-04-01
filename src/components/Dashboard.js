@@ -55,25 +55,29 @@ export default function Dashboard(userID) {
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         setData([]);
-        const uid = user.uid;
+        setAllTimes([]);
+        let uid = user.uid;
+        let getDocument;
+        let getAllTimeDocument = [];
+
         const getCollect = await query(
           collection(db, "doctor", uid, "TimeAvailable"),
           where("status", "!=", 2)
         );
-        const getDocument = await getDocs(getCollect);
+        getDocument = await getDocs(getCollect);
+
+        const getAllTimeCollect = await query(
+          collection(db, "doctor", uid, "TimeAvailable")
+        );
+        getAllTimeDocument = await getDocs(getAllTimeCollect);
+
         getDocument.forEach((doc) => {
           setData((data) => [...data, doc.data()]);
         });
 
-        setAllTimes([]);
-        const getAllTimeCollect = await query(
-          collection(db, "doctor", uid, "TimeAvailable")
-        );
-        const getAllTimeDocument = await getDocs(getAllTimeCollect);
         getAllTimeDocument.forEach((doc) => {
           setAllTimes((allTimes) => [...allTimes, doc.data()]);
         });
-        console.log(allTimes);
 
         setReRender(1);
         if (data.length !== 0) {
@@ -86,7 +90,6 @@ export default function Dashboard(userID) {
 
   function prepareData(bobo) {
     const data = bobo.sort((a, b) => b.dateStart - a.dateStart);
-    console.log(data);
     const columns = [
       {
         title: "Số thứ tự",
@@ -135,19 +138,18 @@ export default function Dashboard(userID) {
     let obj;
     let array = [];
     let a;
+    let month;
     for (const loop in data) {
       if (data[loop].status === "1") {
         a = "Đã nhận được lượt đăng kí";
       } else {
         a = "Chưa nhận được lượt đăng kí";
       }
+      month = Number(data[loop].dateStart.toDate().getMonth()) + 1;
       obj = {
         key: loop,
         STT: Number(loop) + 1,
-        Date:
-          data[loop].dateStart.toDate().getDate() +
-          "/" +
-          data[loop].dateStart.toDate().getMonth(),
+        Date: data[loop].dateStart.toDate().getDate() + "/" + month,
         DateStart: data[loop].dateStart,
         DateEnd: data[loop].dateEnd,
         TimeStart:

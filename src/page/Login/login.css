@@ -14,3 +14,33 @@
   padding: 10px;
   display: block;
 }
+
+.ant-form-item-control-input-content{
+  flex: auto;
+  text-align: left;
+  max-width: 100%;
+}
+
+.ant-card-type-inner .ant-card-head-title{
+padding: 12px 0;
+font-size: 20px;
+text-align: left;
+}
+
+.ant-form-item-label > label{
+  font-size: 15px;
+}
+
+.ant-form-item-control-input-content Button {
+  flex: auto;
+  text-align: center;
+  max-width: 100%;
+}
+
+.ant-tabs-tab{
+  font-size: 20px;
+}
+
+.ant-radio-group{
+  text-align: left;
+}

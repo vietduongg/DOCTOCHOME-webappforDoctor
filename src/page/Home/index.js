@@ -7,8 +7,8 @@ import {
   CloudOutlined,
   ShopOutlined,
   UserOutlined,
-  UploadOutlined,
-  VideoCameraOutlined,
+  InfoCircleOutlined,
+  HomeOutlined,
 } from "@ant-design/icons";
 import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
@@ -16,7 +16,7 @@ import { db } from "../../firebase";
 
 import Dashboard from "../../components/Dashboard";
 import Appointment from "../../components/Appointment";
-import Calendar from "../../components/Calendar";
+import Listmedicalrecord from "../../components/ListMedicalRecord";
 
 const Home = () => {
   const { Header, Content, Footer, Sider } = Layout;
@@ -24,14 +24,13 @@ const Home = () => {
   const [doctorData, setDoctorData] = useState([]);
   const [userID, setUserID] = useState("");
   const auth = getAuth();
-
+  console.log(doctorData);
   function getData() {
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         const docSnap = await getDoc(doc(db, "doctor", user.uid));
         setUserID(user.uid);
         setTimeout(setDoctorData(docSnap.data()), 1000);
-
         setRerender(1);
       } else {
       }
@@ -59,21 +58,15 @@ const Home = () => {
             <b>DOCTOR HOME</b>
           </span>
         </div>
-        <Menu theme="light" mode="inline" defaultSelectedKeys={["4"]}>
+        <Menu theme="light" mode="inline">
           <Menu.Item key="1" icon={<UserOutlined />}>
-            Trang chủ
-          </Menu.Item>
-          <Menu.Item key="2" icon={<VideoCameraOutlined />}>
             Thông tin cá nhân
           </Menu.Item>
-          <Menu.Item key="3" icon={<UploadOutlined />}>
-            Lịch khám
+          <Menu.Item key="2" icon={<HomeOutlined />}>
+            TT phòng khám
           </Menu.Item>
-          <Menu.Item key="4" icon={<BarChartOutlined />}>
-            Hồ sơ bệnh án
-          </Menu.Item>
-          <Menu.Item key="5" icon={<CloudOutlined />}>
-            Kiểm tra lời mời
+          <Menu.Item key="3" icon={<InfoCircleOutlined />}>
+            Báo cáo lỗi
           </Menu.Item>
           <Menu.Item
             key="6"
@@ -118,13 +111,20 @@ const Home = () => {
             >
               <b size={50}>Kiểm tra lịch hẹn của bạn</b>
             </div>
-            <Appointment userID={userID} />
+            <Appointment userID={userID} doctorData={doctorData} />
           </div>
           <div
             className="site-layout-background"
             style={{ padding: 24, textAlign: "center", marginTop: 20 }}
           >
-            <Calendar />
+            {" "}
+            <div
+              className="site-layout-background"
+              style={{ padding: 20, textAlign: "center", fontSize: 40 }}
+            >
+              <b>Hồ sơ bệnh án bạn đã cung cấp</b>
+            </div>
+            <Listmedicalrecord />
           </div>
         </Content>
         <Footer style={{ textAlign: "center" }}>
